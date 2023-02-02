@@ -15,43 +15,21 @@ public interface Visitor<R> {
     }
 
     static <T, R> X<T, R> forType(Class<T> type) {
-        return () -> type;
+        return function -> builder -> builder.register(type, function.compose(type::cast));
     }
 
     interface X<T, R> {
-
-        Class<T> type();
-
-        default Y<R> execute(Function<T, R> function) {
-            return builder -> builder.register(type(), function.compose(type()::cast));
-        }
+        Y<R> execute(Function<T, R> function);
     }
 
     interface Y<R> extends VisitorInitializer<R> {
 
-        default <T> Z<T, R> forType(Class<T> type) {
-            return index -> index == 0 ? type : this;
+        default <T> X<T, R> forType(Class<T> type) {
+            return function -> this.andThen(builder -> builder.register(type, function.compose(type::cast)));
         }
 
-        default Y<R> andThen(Y<R> after) {
-            return builder -> { this.accept(builder); after.accept(builder);};
-        }
-    }
-
-    interface Z<T, R> {
-
-        Object get(int index);
-
-        default Class<T> type() {
-            return (Class<T>)get(0);
-        }
-
-        default Y<R> previous() {
-            return (Y<R>)get(1);
-        }
-
-        default Y<R> execute(Function<T, R> function) {
-            return previous().andThen(builder -> builder.register(type(), function.compose(type()::cast)));
+        private Y<R> andThen(Y<R> after) {
+            return builder -> { this.init(builder); after.init(builder);};
         }
     }
 }
