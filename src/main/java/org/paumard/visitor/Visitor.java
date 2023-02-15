@@ -25,9 +25,9 @@ public interface Visitor<R> {
     interface Y<R> extends VisitorInitializer<R> {
 
         default <T> X<T, R> forType(Class<T> type) {
-            return funk -> builder -> {
-                this.accept(builder);
-                builder.build(klass, funk.compose(klass::cast));
+            return function -> builder -> {
+                this.init(builder);
+                builder.register(type, function.compose(type::cast));
             };
         }
     }
